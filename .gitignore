@@ -1,0 +1,20 @@
+# ✅ Ignore everything inside frontend...
+/frontend/*
+# ✅ ...except the pages folder and its contents
+!frontend/pages/
+!frontend/pages/**
+
+# ✅ Ignore Firebase keys (do not push secrets)
+backend/firebase_key.json
+
+# ✅ Ignore data folder (reports, temp files, etc.)
+/data/
+
+# ✅ Don't ignore .gitignore itself
+!.gitignore
+
+# ✅ Ignore secret config and Python cache
+.env
+__pycache__/
+*.pyc
+.DS_Store

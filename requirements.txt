@@ -1,0 +1,6 @@
+firebase-admin
+python-dotenv
+google-generativeai
+langgraph
+langchain
+langchain-google-genai
