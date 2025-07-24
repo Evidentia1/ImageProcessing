@@ -2,7 +2,7 @@ pipeline{
   agent any
 
   stages{
-    stage('Initialization stage'){
+    stage("Initialization stage"){
       step{
         echo 'Hello World'
         sh "ls -altr"
