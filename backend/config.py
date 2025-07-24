@@ -1,0 +1,8 @@
+# backend/config.py
+
+FIREBASE_KEY_PATH = "backend/firebase_key.json"
+
+GOOGLE_API_KEY = "AIzaSyCnc_I8HAlwIU3HEZ87sKwsl7xdwYkFajw"
+GOOGLE_API_KEY2 = "AIzaSyDHD4D9WyPuB5y54CR3WQJ46aFlVokqAhc"
+
+WEATHER_API_KEY = "e8465540c288491aa50114336250607"
