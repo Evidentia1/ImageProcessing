@@ -1,14 +1,11 @@
 from fpdf import FPDF
 from pathlib import Path
-import re
 import google.generativeai as genai
-import os
-from dotenv import load_dotenv
 
-# ── Load Gemini API ──
-load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+from backend.config import GOOGLE_API_KEY  # 👈 USE config.py instead of dotenv
+
+# ── Load API Key ──
+genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ── Fonts ──
@@ -16,15 +13,7 @@ FONT_DIR = Path(__file__).parent / "fonts"
 FONT_REGULAR = FONT_DIR / "DejaVuSans.ttf"
 FONT_BOLD = FONT_DIR / "DejaVuSans-Bold.ttf"
 
-# ── Emoji remover ──
-_EMOJI_RE = re.compile("[" "\U0001F600-\U0001F64F" "\U0001F300-\U0001F5FF"
-                       "\U0001F680-\U0001F6FF" "\U0001F1E0-\U0001F1FF"
-                       "\u2600-\u26FF" "\u2700-\u27BF"
-                       "\U0001F900-\U0001F9FF" "]+", flags=re.UNICODE)
-def strip_emoji(text: str) -> str:
-    return _EMOJI_RE.sub("", text or "")
-
-# ── LLM Summary Generator ──
+# ── Gemini Summary Generator ──
 def generate_pdf_text_from_state(state: dict) -> str:
     prompt = f"""
 You are an expert insurance claim summarizer.
@@ -53,15 +42,15 @@ Write a clean, professional summary in the following format for a PDF report:
    - Was the claim approved, rejected, or flagged?
    - State clear reasoning.
 
-Only include relevant data, and do not output raw JSON or raw dict.
+Only include relevant data, and do not output raw JSON or dicts.
 
 Here is the data:
 {state}
 """
     response = model.generate_content(prompt)
-    return response.text
+    return response.text.strip()
 
-# ── PDF class ──
+# ── PDF Template ──
 class PDFReport(FPDF):
     def __init__(self):
         super().__init__()
@@ -79,22 +68,22 @@ class PDFReport(FPDF):
     def add_md_line(self, line: str):
         if line.strip().startswith("**") and line.strip().endswith("**"):
             self.set_font("DejaVu", "B", 13)
-            title = line.strip().strip("*").strip()
+            title = line.strip("*")
             self.cell(0, 10, title, ln=True)
             self.ln(2)
         else:
             self.set_font("DejaVu", "", 11)
-            self.multi_cell(0, 7, strip_emoji(line.strip()))
+            self.multi_cell(0, 7, line.strip())
             self.ln(1)
 
-# ── PDF Generator ──
+# ── Final PDF Generator ──
 def generate_pdf2(output_path: str, state: dict) -> str:
     summary_text = generate_pdf_text_from_state(state)
 
     pdf = PDFReport()
-    for raw in summary_text.split("\n"):
-        if raw.strip():
-            pdf.add_md_line(raw)
+    for line in summary_text.split("\n"):
+        if line.strip():
+            pdf.add_md_line(line)
 
     pdf.output(output_path)
     return output_path
