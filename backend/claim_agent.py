@@ -1,15 +1,14 @@
-# backend/claim_agent.py
 import os, uuid
 from pathlib import Path
 from datetime import datetime
 from typing import TypedDict, Optional
 
-from dotenv import load_dotenv
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langgraph.graph import StateGraph, END
 
+from backend.config import GOOGLE_API_KEY
 from backend.utils.exif_checker import validate_exif_logic
 from backend.utils.vision_labels import get_image_labels
 from backend.utils.summarizer   import summarize_claim
@@ -18,10 +17,8 @@ from backend.utils.misrep_detector    import detect_misrepresentation
 from backend.utils.generate_pdf2      import generate_pdf2
 
 # ── LLM setup ──────────────────────────────────────────
-load_dotenv()
-API_KEY = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=API_KEY)
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_API_KEY)
 
 # ── State schema ──────────────────────────────────────
 class ClaimState(TypedDict, total=False):
@@ -77,7 +74,6 @@ def n_weather(state: ClaimState) -> ClaimState:
     dol = state["policy_data"].get("dol")
     location = state["policy_data"].get("location")
 
-    # Just updating state for now. Actual logic is done in utils
     from backend.utils.weather_checker import verify_weather_event
     result = verify_weather_event(dol, location)
 
@@ -126,7 +122,6 @@ def n_decision(state: ClaimState) -> ClaimState:
         labels=state["image_labels"]
     )).content.strip()
 
-    # Normalise
     if   resp.lower().startswith("approve"):
         state["final_decision"] = resp
     elif resp.lower().startswith("reject"):
@@ -153,20 +148,18 @@ flow.add_node("LABELS",          n_labels)
 flow.add_node("SUMMARY",         n_summary)
 flow.add_node("KEYINFO",         n_keyinfo)
 flow.add_node("MISREP",          n_misrep)
-flow.add_node("WEATHER_CHECK",   n_weather)     # ✅ NEW Node
+flow.add_node("WEATHER_CHECK",   n_weather)
 flow.add_node("DECISION",        n_decision)
 flow.add_node("PDF",             n_pdf)
-
 
 flow.set_entry_point("EXIF")
 flow.add_edge("EXIF",     "LABELS")
 flow.add_edge("LABELS",   "SUMMARY")
 flow.add_edge("SUMMARY",  "KEYINFO")
 flow.add_edge("KEYINFO",  "MISREP")
-flow.add_edge("MISREP",   "WEATHER_CHECK")     # NEW
-flow.add_edge("WEATHER_CHECK", "DECISION")     # NEW
+flow.add_edge("MISREP",   "WEATHER_CHECK")
+flow.add_edge("WEATHER_CHECK", "DECISION")
 flow.add_edge("DECISION", "PDF")
 flow.add_edge("PDF", END)
-
 
 claim_agent = flow.compile()
