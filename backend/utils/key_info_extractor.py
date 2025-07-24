@@ -1,18 +1,12 @@
-import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# Load API key from .env
-load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    raise RuntimeError("❌ GOOGLE_API_KEY not found in .env")
+from backend.config import GOOGLE_API_KEY  # 👈 From config.py
 
 # Configure Gemini
-genai.configure(api_key=api_key)
+genai.configure(api_key=GOOGLE_API_KEY)
 
-# Initialize model
+# Initialize model with relaxed safety
 model = genai.GenerativeModel(
     model_name="models/gemini-1.5-flash",
     safety_settings={
