@@ -1,4 +1,5 @@
 firebase-admin
+streamlit
 python-dotenv
 google-generativeai
 langgraph
