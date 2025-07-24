@@ -1,14 +1,11 @@
 import io
 from PIL import Image
 import google.generativeai as genai
-from dotenv import load_dotenv
-import os
 
-# Load API key
-load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# ✅ Load central Gemini config (sets up GOOGLE_API_KEY via config.py)
+from backend import config
 
-# Pick the newer multimodal model
+# ── Gemini model to use ──
 _VISION_MODEL = "models/gemini-1.5-flash"
 
 def gemini_vision_prompt(image_path: str, prompt: str) -> str:
