@@ -1,0 +1,19 @@
+pipeline{
+  agent any
+
+  stages{
+    stage('Initialization stage'){
+      step{
+        echo 'Hello World'
+        sh "ls -altr"
+        sh "pwd"
+      }
+    }
+  }
+
+ post {
+    always{
+      cleanWs()
+    }
+ }
+}
