@@ -16,7 +16,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 st.set_page_config(page_title="Claim Portal", layout="centered")
 
 # ─── LOGO & BRANDING ───────────────────────────────────────────
-logo_path = "../frontend/assets/lloyds_logo.png"
+logo_path = "../frontend/lloyds_logo.png"
 with open(logo_path, "rb") as f:
     logo_b64 = base64.b64encode(f.read()).decode()
 
