@@ -1,4 +1,3 @@
-# backend/utils/summarizer.py
 """
 Gemini-powered summarization + visual-relevance insight
 ───────────────────────────────────────────────────────
@@ -13,18 +12,13 @@ Returned dict keys:
 """
 
 import os, json
-from dotenv import load_dotenv
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# ── Load API key securely ─────────────────────────────
-load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    raise RuntimeError("❌ GOOGLE_API_KEY not found in .env")
+# ✅ Load Gemini configuration via central config
+from backend import config
 
-# ── Configure Gemini client ───────────────────────────
-genai.configure(api_key=api_key)
+# ── Initialize Gemini model with custom safety settings ──
 _gemini = genai.GenerativeModel(
     model_name="models/gemini-1.5-flash",
     safety_settings={
@@ -76,7 +70,6 @@ Respond **strictly** as valid JSON in this exact schema:
             parsed = json.loads(raw_text)
             return parsed
         except json.JSONDecodeError:
-            # If parsing fails, still wrap into dict form
             return {
                 "summary": raw_text,
                 "label_match_score": 0,
