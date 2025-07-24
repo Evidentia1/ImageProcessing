@@ -2,8 +2,8 @@ pipeline{
   agent any
 
   stages{
-    stage("Initialization stage"){
-      step{
+    stage('Initialization stage'){
+      steps{
         echo 'Hello World'
         sh "ls -altr"
         sh "pwd"
