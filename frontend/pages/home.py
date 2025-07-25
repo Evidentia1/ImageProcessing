@@ -162,6 +162,8 @@ with st.form("claim_form"):
 
 # ─── FORM SUBMISSION LOGIC ─────────────────────────────────────
 if submitted:
+    print("✅ Submit button clicked.")
+
     if not (user_email and claim_text and policy_number and image_file):
         st.error("⚠️ Please complete all required fields.")
         st.stop()
@@ -171,11 +173,12 @@ if submitted:
     with open(path, "wb") as f:
         f.write(image_file.getbuffer())
 
-    h = compute_sha256(path)
-    if check_duplicate_hash(h):
-        st.error("🚩 This image was already submitted.")
-        st.stop()
-    db.collection("image_hashes").add({"hash": h, "ts": datetime.now()})
+    # 🔒 Removed Firebase hash checking
+    # h = compute_sha256(path)
+    # if check_duplicate_hash(h):
+    #     st.error("🚩 This image was already submitted.")
+    #     st.stop()
+    # db.collection("image_hashes").add({"hash": h, "ts": datetime.now()})
 
     init_state = {
         "file_path": path,
@@ -184,7 +187,8 @@ if submitted:
             "policy_number": policy_number,
             "policy_date": str(policy_date),
             "dol": str(dol),
-            "threshold": int(threshold)
+            "threshold": int(threshold),
+            "location": storm_location,  # for weather check
         },
         "natural_calamity": natural_calamity,
         "storm_location": storm_location,
@@ -193,15 +197,20 @@ if submitted:
     }
 
     with st.spinner("🧠 AI is analyzing your claim..."):
-        result = claim_agent.invoke(init_state)
+        print("🚀 Invoking claim_agent with:", init_state)
+        try:
+            result = claim_agent.invoke(init_state)
+            print("✅ claim_agent returned result")
+        except Exception as e:
+            print("❌ claim_agent crashed:", e)
+            st.error(f"Backend error: {e}")
+            st.stop()
 
-    # Debug
     if result.get("debug"):
         with st.expander("🛠️ Debug Logs"):
             for l in result["debug"]:
                 st.write("•", l)
 
-    # Final Decision Display
     verdict = result.get("final_decision", "flag").lower()
     vmap = {
         "approve": ("#00c851", "#003b2e"),
@@ -209,12 +218,11 @@ if submitted:
         "flag": ("#ffbb33", "#3a2b00")
     }
 
+    verdict_type = "flag"
     if verdict.startswith("approve"):
         verdict_type = "approve"
     elif verdict.startswith("reject"):
         verdict_type = "reject"
-    else:
-        verdict_type = "flag"
 
     color, bg_color = vmap[verdict_type]
 
@@ -225,7 +233,6 @@ if submitted:
     </div>
     """, unsafe_allow_html=True)
 
-    # PDF Download
     pdf_path = result.get("pdf_path")
     if pdf_path and os.path.exists(pdf_path):
         with open(pdf_path, "rb") as f:
