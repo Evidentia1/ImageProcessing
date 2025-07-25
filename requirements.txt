@@ -5,3 +5,4 @@ google-generativeai
 langgraph
 langchain
 langchain-google-genai
+fpdf
